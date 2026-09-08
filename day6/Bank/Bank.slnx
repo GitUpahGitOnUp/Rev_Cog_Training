@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="bankAPP/bankAPP.csproj" />
+  <Project Path="bankLIB/bankLIB.csproj" />
+</Solution>
