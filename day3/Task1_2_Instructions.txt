@@ -1,0 +1,41 @@
+Task 1
+
+Write code which will increment a variable each time the program runs.
+eg. counter = 1
+
+	Whenever you run the program, counter will increment (and persist even if file/machine shutdown)
+	counter ++
+	
+	- just display that number on the console
+
+	- *hint* Use FiliIO, when you run the program, read the number from the file and display
+	increment the number
+	store it back to the file
+	
+Task 2
+
+Create a console application, "guestManagement" that asks a user:
+	
+	"Welcome to the Guest Management System"
+		a. New Guest
+		b. View Guest Details
+		
+	When "a":
+	"Please enter your details below:"
+	- name, lastName, email, phonenum, socialsecurity
+	
+	store guest info in a file (separate file for ea. guest)
+	
+	filename will be: SSNum.txt (the file gets its name from user's SS#)
+	
+	When "b": 
+	user enters SSN to view user info
+	
+	 --- file format should look like this: 
+	 
+	 SSNO: 
+	 First Name: 
+	 Last Name:
+	 Email:
+	 Phone: 
+	 Notes:

@@ -1,0 +1,43 @@
+
+					--------------------------		AI		------------------------------------------------------
+					
+GenAI - Generation of new content (including generate agents!)
+
+
+AgenticAI - Agents: i.e., chat agents
+
+			- single agent (chat agent)
+			- Multi-agent solution
+			
+	--------------------------------------------------------------------------------------------
+	Ex:
+			You are creating a website for Tourist/vacations/holidays to be used around the world
+			
+			You have a user in India (Nikhil!):
+			
+					Nikhil Prompts: "Plan me a vacation for 20 days to visit Europe with my family of 4 - 2 kids less than 10 years old.
+						1. Book me the cheapest flight, non-stop, business class, which starts at midnight India time.
+						2. Book me a 4 star stay with all meals included
+						3. Book a guide to take me to good and must-vist places
+						4. Book a car/vehicle for all the days fright from pick up on arrival and drop-off."
+					
+				What would take hours to do yourself, an Agent 7 - 10 minutes.
+	---------------------------------------------------------------------------------------------
+
+Data and NLP (Natural Language Processing) 
+
+			- read and process any format of data, in any language
+
+--------------------------------------------------------------------------------------------------
+
+Machine Learning
+	Supervised learning, Unsupervised learning, semi-supervised learning, reinforcement learning
+-------------------------------------------------------------------------------------------------
+
+Vision - application can actually 'see' , 'read' 1000 page docs
+
+Voice recognition - Alexa, Google Voice, Siri, etc. 
+
+---------------------------------------------------------------------------------------------
+
+

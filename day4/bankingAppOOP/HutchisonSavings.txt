@@ -1,0 +1,5 @@
+Account Holder: Angela Hutchison
+Account Type: Savings
+Account Number: 1234
+Initial Balance: 5000
+Account is Active? True

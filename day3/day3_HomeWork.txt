@@ -1,0 +1,23 @@
+1. For those who did C# for the first time:
+
+	a. code practice from lecture
+	b. create a new application "employeeManagement"
+			
+			- create a class 'Employee'
+			- add 5 properties
+			- add 2 relevant methods
+			- create object of the same type and test it
+
+2. For those who undertand OOPS and any other language:
+
+	b. create a new application "employeeManagement"
+			
+			- create a class 'Employee'
+			- add 5 properties
+			- add 2 relevant methods
+			- create object of the same type and test it
+
+3. For everyone after the above activities are finished:
+
+	- finish series on YouTube: https://www.youtube.com/watch?v=SXmVym6L8dw&list=PLAC325451207E3105
+	- 

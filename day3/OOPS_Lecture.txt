@@ -1,0 +1,211 @@
+Object Oriented Programming Structure (or System) OOPS
++
+Design Patterns
++
+SOLID Principles
++
+Coding Standards
+
+SOLID == 
+S -	Single Responsibility Principle
+	
+	- a class should perform only one job or duty (and only 1 reason to change)
+
+O - Open / Cole Principle
+
+	- software entities like classes and modules should be open for extension but closed for modification
+	- you should be able to add new features or behaviors w/o changing existing, working code.
+
+L - Liskov Substitute Principle
+
+	- objects of superclass should be replaceable with objects of a subclass without breaking the application.
+
+I - Interface Segregation Principle
+
+D - Dependency Inversion Principle
+
+----------------------------------------------------------------------
+
+Object - everything
+
+		Made up of:
+				properties (attributes) describes the object - name, age, qualification, country, etc
+				
+				methods/functions (reactions, behaviors) press down on accelerator, car moves faster
+				
+				variables (we don't use them though, encapsulation is better)
+				
+				constructors
+				
+				events - automated, balance decreases when $$ is withdrawn, a response to some action/event
+				so if no event occurs, no action is taken i.e. if you don't use your card, nothing happens
+				
+				enums (enumerations) - fixed set of values for the properties (like a drop-down menu list)
+							For some properties, we want to only have selected, pre-defined values
+		
+	What is an object?
+	
+			It is a real world entity, either virtual or physical. 
+			
+			Developers need to design the object, code the object 
+			
+			How?
+			
+			- blueprint -> building, in programming it is a file (.cs, .cpp, .c, .java, .py, etc.)
+			- inside of the file you will design a class (class == blueprint)
+
+-------------------------------------------------------------------------------------------------------------------
+
+Some More Stuff About Objects 
+
+Disigning Objects
+
+		To designa a class (blueprint), 4 Pillars
+		
+		- Abstraction
+			
+			- while designing an object, consider only those artifacts which fall under the scope of an 
+			application
+			- artifacts (properties, methods, variables, constructors, enums, events)
+			e.g. Properties of a person (need blood type for bank account? No. For medical app? Yes.) 
+			
+			- What is an Abstract Class?
+				- Accounts (has no real implementation, you implement a *type* of account - checking, savings, etc.)
+				(Abstract is like a superclass, but an abstract won't directly create objs., and a superclass can)
+			
+				
+		
+		- Polymorphism
+		
+		- Inheritance
+		
+		- Encapsulation
+			
+			- create software/ code / algo which is easy to use, but difficult to understand how it works.
+		So that is what we do not use variable, rather we rap variables in a property called getters and setters
+		
+Ex:
+
+// this is the design / class / blueprint
+public Class Employee {	
+			// variable (this is the secret nobody should know)
+			double salary = 0; // we don't say this as salary but a different name (salary -> value)
+			// property for the variable
+			
+			Public double EmpSalary // (EmpSalary is an alias for 'double salary')
+			{
+				get
+				{
+						return salary;
+				}
+				set{
+						salary = value;
+					}
+			}
+			
+			public double Withdraw(double amount)
+			{
+						....many lines of code
+			}
+			
+	}		
+		Employee emp = new Employee(); // object instance
+		emp.EmployeeSalary = 2000; //<- this is a skeleton. where does this variable get stored? in the Class
+		
+		emp.Withdraw(200); //method call 
+		
+***** Difference between Abstraction and Encapsulation ***** INTERVIEW QUESTION ******************************************
+
+abstraction == design process consideration (i.e. application scope)
+
+encapsulation == data hiding during actual implementation 
+
+****************************** INTERVIEW QUESTION ^^^ ********************************************************************
+
+Inheritance - reuse code / funtionalities 
+
+	 when you have to design / create classes which are of a similar category and will have common properties / methods
+		
+		you create a master class
+				and inherit it to child classes
+				
+			public class Accounts
+			{
+					property1
+					property2
+					property3
+					
+					withdraw()
+					deposit()
+			}
+			
+			\\ ChildClassName : ParentClassName
+			public class Savings : Accounts 
+			{
+				property6 (unique property not shared back to ParentClass)
+			}
+			
+	
+	Polymorphism - when child classes from the same parent will behave differently with the same Object, 
+		you implement polymorphism.
+		
+		Keyword: virtual i.e. public virtual in Withdraw() Declared in ParentClass
+		
+		Keword: override ie. public override int withdraw() Declared in ChildClass, and withdraw() behaves differently
+																					based on account type
+		
+		Polymorphism - different behaviours for the same cause
+			Ex.:
+				Draw - executing draw method might behave differently (draw circle, draw triangle, draw rect.)
+				
+				Lots of books/blogs describe 2 types of polymorphism:
+					
+					1. Compile time
+						-  2 classes savings - withdraw	(called diff. method at compile time)
+									 checking - withdraw (called diff. method at compile time)
+						
+						some say below code as polymorphic as well
+						
+						public int Add(int num1, int num2)
+						{
+								return num1 + num2
+						}
+						
+						public int Add(int num1 + num2 + num3)
+						{
+								return num1 + num2 + num3
+						}
+					
+					2. Runtime
+					
+						- At runtime / execution time
+							
+							checking - withdraw (at the same time, different rules i.e. max withdraw amt)
+							savings - withdraw (at the same time, different rules)
+						
+					ex.:
+					
+					Accounts() <- parent
+							public virtual in withdraw(int amount)
+							{
+									return availableBalance;
+							}
+					
+					Savings() <- child
+							public overriding int withdraw(int amount)
+							{
+									if(amount > 5000)
+									{
+											throw new Exception("Sorry you can withdraw max 5000);
+									}
+							}
+					
+					Checking() <-
+							public overriding int withdraw(int amount)
+							{
+									if(amount > 30000)
+									{
+											throw new Exception("Sorry you can withdraw max 30000);
+									}
+							}
+							

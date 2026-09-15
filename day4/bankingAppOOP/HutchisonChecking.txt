@@ -1,0 +1,5 @@
+Account Holder: Angela Hutchison
+Account Type: Checking
+Account Number: 1234
+Initial Balance: 1000
+Account is Active? True

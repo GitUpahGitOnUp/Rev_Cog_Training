@@ -1,0 +1,100 @@
+						Relational Database Management System - for QC and Interviews broadly
+						
+What is a Database?
+
+	 - A collection of organized data
+	 
+	 - Data has a structure
+	 
+	 - Can be paper-based
+	 
+Flat File Databases
+
+	- A flat-file database is a simple database that stores all data in a single table
+	
+		- A flat-file database can be stored in a text file, such as a tab-delimited file, a spreadsheet, or in a 
+			database file that contains 1-or-more unrelated tables
+			
+*************************	Problems with Flat File Databases	**************************** INTERVIEW Qs **************************
+
+Redundancy
+----------
+
+		- large amounts of duplicated data (like a music library that lists the artist, album for each song
+		
+		- Make data entry slower
+		
+		- Uses disk space
+		
+		- Leads to other problems
+		
+Reduced Data Integrity
+----------------------
+
+		- More likely to be inaccurate due to:
+											  input errors, inconsistent data entry
+											
+											
+Difficult to Update
+-------------------
+
+		 - If entries change, all instances have to be updated
+
+Security
+--------
+		- all users have access to the same set of data
+		
+Program - Data Dependence
+-------------------------
+
+				- The user interface (amongst other things) is tied to a specific file. To create new views of data you would need to create new data files.
+	
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+		************************** Overcoming Problems Using RDBMS  ******************
+		
+Reduced Redundancy
+
+Improved data consistency
+
+Improved Security
+
+Improved Data Dependency
+
+When to implement a SQL Server (or Oracle-based RDBMS)
+
+	Take into consideration: 
+	
+		- the cost a license (renew every 3-5 years, support cost)
+		
+		- buy a server for the DB
+		
+		- pay for woman power to administer the DBA
+		
+		- space, electricity (cooling), etc.
+		
+		- no revenue for business off-days - server still costs $$ but does not generate it
+
+Compared to Excel, OpenOffice, etc which after perhaps buying the license does not cost very much at all.
+
+
+*****************	Database Concepts	 ***** IMPORTANT
+
+Record* = row
+
+Field* = Columns
+
+Entity* = table
+	
+Data types (Access specific)
+
+	- text		
+	
+	- numeric	Numbers
+	
+	- date		Various Formats
+	
+	- boolean 	True/False
+	
+	- counter -
+	

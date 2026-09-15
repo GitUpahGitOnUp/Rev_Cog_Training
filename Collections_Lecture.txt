@@ -1,0 +1,68 @@
+						
+											Collections
+											
+	All collections store a value as an index, starting from 0 
+	
+	- Array
+			this is for primitive data types
+			
+			ex.
+				string[] friends = new string[5]; // num of elements are hard-coded and immutable 
+				friends[0] = "Peter";
+				friends[1] = "Osborne";
+				friends[2] = "Mary";
+				friends[3] = "Nikhil";
+				friends[4] = "Tom";
+				
+				console.WriteLine(friends[2]) // prints Mary to the console
+	
+	
+	** Some limitations/challenges when using arrays **
+	
+		a. array size must be speciefied when it's initialized. If you want to change the size you must make a new
+		array of that size.
+		
+		b. arrays must have a defined type (string, int, double, bool, etc.)
+	--------------------------------------------------------------------------------------------------------------------
+	
+	- ArrayList 
+				- does not require a specific type *** use this when  you don't know what type of data
+		
+	*** Problems ***
+				- Everytime we store or update the data, it uses boxing and unboxing which affects performance
+				of the application
+		
+		--- use ArrayList when you don't know the type of data
+		but if you do know, use 'List', discussed below.
+	----------------------------------------------------------------------------------------------------------------------
+	
+	- List
+			The most commonly used collection in the industry, because of performance
+		
+		- NEED TO KNOW THE DATATYPE
+		
+		Comes from System.Collections.Generics; -- this is recommended for neat memory management and performance
+
+	----------------------------------------------------------------------------------------------------------------------
+	
+	- Hashtables 
+			- stores data in key value pairs that are oganized based on the unique key values
+			
+			- Hashtables stores key and value in an object format like ArrayList (and will accept diff. datatypes)
+			
+			*** a better DS to use when you know the data type == Dictionary ***
+			
+	----------------------------------------------------------------------------------------------------------------------
+	
+	- Dictionary
+				- 
+	
+	- Queues
+	
+	- Stack
+	
+	- Linked List 
+	
+	----------------------------------------------------------------------------------------------------------------------
+								LINQ with Collections
+	

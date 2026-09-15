@@ -1,0 +1,10 @@
+Competency Topics for Quality Control Sessions
+
+Gen AI Introduction & C#
+RDBMS & Entity framework
+ASP.NET Core Web APIs and Testing
+HTML CSS JS
+React/Angular
+Azure & CI/CD- DevOps
+MSA
+Python for backend

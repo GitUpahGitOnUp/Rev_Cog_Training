@@ -1,0 +1,29 @@
+1. LINQ (Language Integrated Query) and Lambda
+
+	LINQ - where does it come from? What is it?
+	
+		- it is a language to work with Managed Data (invented by Microsoft)
+				- used with all sorts of apps
+					- console, web app, desktop, mobile, REST api service, etc.
+			
+		There are HELLA sources of Managed Data, and lots to learn to be able to work with / integrate them 
+		
+			Types of Managed Data:
+				- Collections, DBs, 
+				- Files (XML (xpath + xquery), JSON (), Excel), 
+				- Mailbox (client requires this as bills, invoices, etc. has necessary info)
+				- SOAP (Simple Object Access Protocol) Web service,
+				- REST API, 
+				- Active Directory(when they watching everything you do on your machine)
+		
+-------------------  			LINQ TO THE RESCUEEEEE!!!!			-----------------------------------
+
+- You should know how to connect with the destination (where the data is coming from) 
+
+- You should know LINQ language / syntax
+
+2. Serialization - not in the material, but we should study it fr fr
+
+3. SQL Server (setup)
+		a. download and install sql server
+		b. SQL server management studio

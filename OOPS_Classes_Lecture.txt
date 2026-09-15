@@ -1,0 +1,17 @@
+1.Classes
+
+	- Public (normal class)
+	- Public (Abstract class)
+	- Public Sealed clsas(
+	- Public Satic Class
+	
+			Accounts
+					--> Loans (child)
+							--> Vehicle
+										--> Car
+												-->
+													SUV (we don't want this class to be further inherited) Sealed? Yes.
+													   ^ stop inheritance here ^
+													   
+			thus we mark the SUV class as 'sealed'
+			

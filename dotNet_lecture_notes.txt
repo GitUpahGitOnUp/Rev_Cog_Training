@@ -1,0 +1,62 @@
+.NET Core
+
+Ecosystem of .NET
+
+.NET supports more than 54 languages 
+	- when the build happens, the language compiler will convert it to a common language (MSIL)
+	which is understood
+	
+
+1. Components of .NET
+
+- 1000+ libraries (common operations needed by apps) 'System' is a library
+		- Libraries -
+			- are made up of namespaces (package in Java) ( namespace i.e. FileIO / Network / Memory)
+			- namespaces can have classes
+			- classes have methods
+- Runtime
+	- OS (running on RAM) with 100s of apps running
+	- .NET gives you a separate space (i.e. banking app running) CLR (Java JVM)
+	- CLR == Common Language Runtime (made up of 9 sub-components) https://learn.microsoft.com/en-us/dotnet/standard/clr
+		- ea. lang. has its own syntax
+	
+	- CTS == Common Type System
+		- It splits data into value types (stored on the stack) and reference types (stored on the heap)
+	
+	Compilers are designed based on CTS and CLS 
+	
+	- CLI (common language infrastructure)  Tools = Notepad, Visual Studio, VS Code - use 1 with debugging
+
+2. Compilation process (what happens when you build and / or run)
+
+- written code in VS Code -> build -> compiler C# === 'csc' -> (new file .exe or .dll(always in bin folder) 
+	collectively called an Assembly) MSIL ((Microsoft intermediate language code) (bytecode in Java))
+	
+- when app runs
+	
+	- app goes onto RAM, running on a CLR (common language runtime)
+	- depending on OS, MSIL goes through a runtime convertion -> binary which gets executed on RAM 
+		(ea. OS has a diff binary, the CLR converts the MSIL to the correct binary form for that OS)
+ 
+3. JIT - just in time compiler
+
+	- aka 'runtime compilation' the compilation process described just above
+
+4. (code) One of the code activities - File I/0 
+
+    - how to create a file
+	- how to read the file
+	- how to write into a file
+	- how to append a file
+
+-----------------------------------------------------------------------------------
+System.IO
+
+Classes:
+	
+	Filestream  						Networkstream							memorystream
+	
+	Filestream myFile = new FileStream("filename", fileaccess., filemode.);
+	StreamReader (read from a file)
+	StreamWriter (write into the file)
+													

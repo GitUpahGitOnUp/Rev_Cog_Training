@@ -2,16 +2,16 @@
 
 public class Accounts
 {
-    public int accNo {get; set;}
+    public int AccNo {get; set;} // this should be PK ID
 
-    public double accBalance {get; set;}
+    public double AccBalance {get; set;}
 
-    public string accName {get; set;} = "";
+    public string AccHolderName {get; set;} = "";
 
 
     public double checkBalance()
     {
-        return accBalance;
+        return AccBalance;
     }
 
     public double Withdraw(int amount)
@@ -19,8 +19,8 @@ public class Accounts
         // add input validations HERE
 
         // connect to DB and execute SQL query on table (using LINQ) 
-        accBalance = accBalance - amount;
-        return accBalance;
+        AccBalance = AccBalance - amount;
+        return AccBalance;
     }
 
     public double Deposit(int amount)
@@ -28,7 +28,7 @@ public class Accounts
         // add input validations HERE
 
         // connect to DB and execute SQL query on table (using LINQ) 
-        accBalance = accBalance + amount;
-        return accBalance;
+        AccBalance = AccBalance + amount;
+        return AccBalance;
     }
 }
