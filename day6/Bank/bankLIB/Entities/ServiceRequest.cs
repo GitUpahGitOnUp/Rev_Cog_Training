@@ -9,7 +9,6 @@ public class ServiceRequest
     #region Properties
     // explicit primary key as RequestId doesn't match EF's auto-dectect. naming pattern
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int RequestId {get; set;}
 
     public int AccNo {get; set;} // this is a value type, not an acc obj so that state at a particular time is captured, unlike a ref obj. which will

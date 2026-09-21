@@ -16,6 +16,11 @@ public class Accounts
     public string AccHolderName {get; set;} = "";
 
     public AccountType Type {get; set;}
+
+    // only applicable to Loan accounts, null for Checking + Savings acc.s
+    public decimal? InterestRate {get; set;}
+
+    public int? LoanTermYears {get; set;}
     
     // Ea. account has its own transaction history. Last 5 Transactions option displays 1 acc. only.
     public List<Transaction> Transactions {get; set;} = new();

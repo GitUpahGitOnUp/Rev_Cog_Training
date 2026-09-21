@@ -15,9 +15,12 @@ namespace bankLIB.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MiddleInitial = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserType = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false)
                 },
@@ -34,6 +37,8 @@ namespace bankLIB.Migrations
                     AccBalance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     AccHolderName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
+                    InterestRate = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    LoanTermYears = table.Column<int>(type: "int", nullable: true),
                     CustomerUserId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -50,7 +55,8 @@ namespace bankLIB.Migrations
                 name: "ServiceRequests",
                 columns: table => new
                 {
-                    RequestId = table.Column<int>(type: "int", nullable: false),
+                    RequestId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     AccNo = table.Column<int>(type: "int", nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),

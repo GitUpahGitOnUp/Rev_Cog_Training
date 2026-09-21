@@ -6,19 +6,24 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 public abstract class User
 {
-    [DatabaseGenerated(
-    DatabaseGeneratedOption.None)]
-    public int UserId {get; set;} // both admins & customers get a UId
+
+    public int UserId {get; set;}
+    public string FirstName {get; set;} = "";
+
+    public string MiddleInitial {get; set;} = "";
+
+    public string LastName {get; set;} = "";
     public string Username {get; set;} = "";
 
-    public string Password {get; set;} = "";
-
-    // gotta figure out how do incorporate BCrypt or something here! ***
     public string PasswordHash { get; set; } = "";
 
     // each sub-class gets access to this validation logic
+
+    // BCrypt.Verify hashes enteredPassword using the same
+    // salt embedded in PasswordHash, compares the 2 hashes
+    // but doesn't actually decrypt them as hashing is 1-way
     public bool ValidateLogin(string enteredPassword)
     {
-        return Password == enteredPassword;
+        return BCrypt.Net.BCrypt.Verify(enteredPassword, PasswordHash);
     }
 }

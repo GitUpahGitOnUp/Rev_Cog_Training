@@ -6,6 +6,7 @@ using bankLIB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 // reads appsettings.json from app output folder
 // IConfigurationBuilder is a part of MS.Extenstion.Config and 
@@ -19,6 +20,9 @@ string connectionString = config.GetConnectionString("BankDb") ??
 var optionsBuilder = new DbContextOptionsBuilder<BankDbContext>();
 optionsBuilder.UseSqlServer(connectionString);
 
+// debug logging text to show boo-boos, whoops-a-doodles, and confounding behavior
+//optionsBuilder.LogTo(Console.WriteLine);
+
 using BankDbContext dbContext = new BankDbContext(optionsBuilder.Options);
 
 SeedDatabaseIfEmpty(dbContext);
@@ -28,6 +32,7 @@ AuthService authService = new AuthService(dbContext);
 // top level safety net to try to make this app air-tight
 // to catch an unanticipated error and not crash the whole dang thing
 #region ------- Welcome Menu - Run Application -------
+
 try
 {
     RunApplication(authService, dbContext);
@@ -56,7 +61,7 @@ static void RunApplication(AuthService authService, BankDbContext dbContext)
         switch (choice)
         {
             case "1":
-                    HandleCustomerLogin(authService);
+                    HandleCustomerLogin(authService, dbContext);
                     break;
             
             case "2":
@@ -109,14 +114,18 @@ static void SeedDatabaseIfEmpty(BankDbContext dbContext)
       AccNo = 1003,
       AccHolderName = "Jane Doe",
       AccBalance = -10000,
-      Type = AccountType.Loan  
+      Type = AccountType.Loan  ,
+      InterestRate = 6.5m,
+      LoanTermYears = 15
     };
 
     var demoCustomer = new Customer
     {
-        UserId = 1,
+        FirstName = "Jane",
+        MiddleInitial = "M",
+        LastName = "Doe",
         Username = "customer1",
-        Password = "customer123",
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword("customer123"),
         Accounts = new List<Accounts>
         {
             checkingAccount,
@@ -127,9 +136,11 @@ static void SeedDatabaseIfEmpty(BankDbContext dbContext)
 
     var demoAdmin = new Admin
     {
-        UserId = 2,
+        FirstName = "Alexandra",
+        MiddleInitial = "S",
+        LastName = "Rivera",
         Username = "admin1",
-        Password = "admin123"
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123")
     };
 
     // .Add() doesn't hit the DB, it tells dbContext to track the new object for future saving
@@ -147,15 +158,15 @@ static void SeedDatabaseIfEmpty(BankDbContext dbContext)
 
 
 // promps cust. for login, continue to menu if credentials are validated
-#region ------- Customer Login -------
-static void HandleCustomerLogin(AuthService authService)
+#region ------- Handle Customer Login -------
+static void HandleCustomerLogin(AuthService authService, BankDbContext dbContext)
 {
     Customer? customer = PromptLogin<Customer>(authService);
 
     if (customer is not null)
     {
-        Console.WriteLine($"Welcome to Community Wealth, {customer.Username}!");
-        DisplayCustomerMenu(customer);
+        Console.WriteLine($"Welcome to Community Wealth Credit Union, {customer.FirstName}!");
+        DisplayCustomerMenu(customer, dbContext);
     }
 }
 #endregion
@@ -175,7 +186,46 @@ static void HandleAdminLogin(AuthService authService, BankDbContext dbContext)
 }
 #endregion
 
+#region Read Password Securely 
 
+static string ReadPassword()
+{
+    string password = "";
+
+    while (true)
+    {
+        // intercept: 'true' means that the key press is captured w/o being 
+        // printed to the console
+        ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+
+        if (key.Key == ConsoleKey.Enter)
+        {
+            Console.WriteLine();
+            break;
+        }
+
+        if(key.Key == ConsoleKey.Backspace && password.Length > 0)
+        {
+            // \b moves the cursor back one space, then that space overwrites
+            // the visible *, then \b again moves back so that the next char types 
+            // in the correct place
+            password = password.Substring(0, password.Length - 1);
+
+            Console.Write("\b\b");
+            continue;
+        }
+
+        if (!char.IsControl(key.KeyChar))
+        {
+            password += key.KeyChar;
+            Console.Write("*");
+        }
+    }
+
+    return password;
+}
+
+#endregion
 // generic handles login propmpt for Cust + Admin types
 // and loops until login is validated or user gives up and exits
 #region ------- PromptLogin Method -------
@@ -190,12 +240,12 @@ static TUser? PromptLogin<TUser>(AuthService authService)
         string? username = Console.ReadLine();
 
         Console.WriteLine("Please enter your password: ");
-        string? password = Console.ReadLine();
+        string? password = ReadPassword();
 
         var request = new LoginRequest
         {
             Username = username ?? "",
-            Password = password ?? ""
+            Password = password 
         };
 
         try
@@ -217,7 +267,7 @@ static TUser? PromptLogin<TUser>(AuthService authService)
         }
 
         Console.WriteLine("Please enter to retry, or 'exit' to cancel: ");
-        string? retry = Console.ReadLine();
+        string? retry = ReadPassword();
 
         if (string.Equals(
             retry, "exit",
@@ -284,6 +334,9 @@ static Customer? SelectCustomer(BankDbContext dbContext)
     var matchedCustomer = dbContext.Users
         .OfType<Customer>()
         .Include(c => c.Accounts) // ! Eager loading, w/o it, the list would come back empty every time due to lack of EF fetch
+        .ThenInclude(a => a.Transactions)
+        .Include(c => c.Accounts)
+        .ThenInclude(a => a.ServiceRequests)
         .FirstOrDefault(c => c.UserId == customerId);
 
     if (matchedCustomer is null)
@@ -298,7 +351,7 @@ static Customer? SelectCustomer(BankDbContext dbContext)
 //  Customer Menu loop
 //  uses try/catch for each option so one bad entry doesn't crash the entire menu
 #region ------- Customer Menu -------
-static void DisplayCustomerMenu(Customer customer)
+static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
 {
     bool inCustomerMenu = true;
 
@@ -320,6 +373,7 @@ static void DisplayCustomerMenu(Customer customer)
         {
             switch (choice)
             {
+                #region 1. Account Summary Details
                 case "1":
 
                     // shows the cust. a numbered list of their accs. and returns there selection, or null is none exists
@@ -334,10 +388,13 @@ static void DisplayCustomerMenu(Customer customer)
                     Console.WriteLine($"Account Number: {selectedAccount.AccNo}");
                     Console.WriteLine($"Account Type: {selectedAccount.Type}");
                     Console.WriteLine($"Account Holder: {selectedAccount.AccHolderName}");
-                    Console.WriteLine($"Blance: {selectedAccount.AccBalance:C}");
+                    Console.WriteLine($"Balance: {selectedAccount.AccBalance:C}");
 
                     break;
-                
+                #endregion
+
+                #region 2. Make A Withdrawal
+
                 case "2":
                     
                     Accounts? withdrawAccount = SelectAccount(customer);
@@ -362,8 +419,6 @@ static void DisplayCustomerMenu(Customer customer)
 
                         var withdrawTransaction = new Transaction
                         {
-                            // incremented ID, scoped for this acc's own list, until ef core auto-gens its own IDs
-                            TransactionId = withdrawAccount.Transactions.Count + 1, 
                             AccNo = withdrawAccount.AccNo,
                             Type = TransactionType.Withdraw,
                             Amount = withdrawAmount,
@@ -371,9 +426,11 @@ static void DisplayCustomerMenu(Customer customer)
                         };
 
                         withdrawAccount.Transactions.Add(withdrawTransaction);
-                        Console.WriteLine(
-                            $"Withdrawal Successful. New " +
-                            $"balance: {newBalance:C}");
+                        Console.WriteLine($"Withdrawal Successful. New balance: {newBalance:C}");
+
+                        // commit the withdrawal *and* the transaction record -> SQL Server
+                        // this is what moves it from only changing the in-memory obj.
+                        dbContext.SaveChanges();
 
                     }
                     catch (Exception ex)
@@ -382,7 +439,9 @@ static void DisplayCustomerMenu(Customer customer)
                     }
 
                     break;
-                
+                #endregion
+
+                #region 3. Make A Deposit
                 case "3":
                     Accounts? depositAccount = SelectAccount(customer);
 
@@ -405,7 +464,6 @@ static void DisplayCustomerMenu(Customer customer)
 
                         var depositTransaction = new Transaction
                         {
-                            TransactionId = depositAccount.Transactions.Count + 1,
                             AccNo = depositAccount.AccNo,
                             Type = TransactionType.Deposit,
                             Amount = depositAmount,
@@ -413,8 +471,11 @@ static void DisplayCustomerMenu(Customer customer)
                         };
 
                         depositAccount.Transactions.Add(depositTransaction);
-                        Console.WriteLine($"Deposit Successful. New " +
-                        $"balance: {newBalance:C}");
+                        
+                        // commits deposit and transaction record -> SQL Server
+                        dbContext.SaveChanges();
+
+                        Console.WriteLine($"Deposit Successful. New balance: {newBalance:C}");
                     }
                     catch (Exception ex)
                     {
@@ -422,9 +483,12 @@ static void DisplayCustomerMenu(Customer customer)
                     }
                     break;
                 
+                #endregion
+
+                #region 4. Make A Transfer
+
                 case"4":
-                    Console.WriteLine(
-                        "Select the account to transfer FROM: ");
+                    Console.WriteLine("Select the account to transfer FROM: ");
                     Accounts? fromAccount = SelectAccount(customer);
 
                     if (fromAccount is null)
@@ -432,9 +496,9 @@ static void DisplayCustomerMenu(Customer customer)
                         break;
                     }
 
-                    Console.WriteLine(
-                        "Select the account to transfer TO: ");
+                    Console.WriteLine("Select the account to transfer TO: ");
                     Accounts? toAccount = SelectAccount(customer);
+
                     if (toAccount is null)
                     {
                         break;
@@ -470,7 +534,6 @@ static void DisplayCustomerMenu(Customer customer)
                         // 1 transaction PER account, to maintain ea. acc.'s own trans. history
                         var outTransaction = new Transaction
                         {
-                            TransactionId = fromAccount.Transactions.Count + 1,
                             AccNo = fromAccount.AccNo,
                             Type = TransactionType.TransferOut,
                             Amount = transferAmount,
@@ -479,7 +542,6 @@ static void DisplayCustomerMenu(Customer customer)
 
                         var inTransaction = new Transaction
                         {
-                            TransactionId = toAccount.Transactions.Count + 1,
                             AccNo = toAccount.AccNo,
                             Type = TransactionType.TransferIn,
                             Amount = transferAmount,
@@ -488,11 +550,14 @@ static void DisplayCustomerMenu(Customer customer)
 
                         fromAccount.Transactions.Add(outTransaction); // saves transaction history
                         toAccount.Transactions.Add(inTransaction);
+
+                        
+                        // commits the transfer and the transaction records -> SQL Server
+                        dbContext.SaveChanges();
+
                         Console.WriteLine("Transfer successful.");
 
-                        Console.WriteLine(
-                            $"{fromAccount.AccNo} new " +
-                            $"balance:  {toNewBalance:C}");
+                        Console.WriteLine($"{fromAccount.AccNo} New balance:  {toNewBalance:C}");
                     }
                     catch (Exception ex)
                     {
@@ -500,6 +565,10 @@ static void DisplayCustomerMenu(Customer customer)
                     }
                     break;
                 
+                #endregion
+
+                #region 5. Last 5 Transactions
+
                 case "5":
                     Accounts? historyAccount = SelectAccount(customer);
 
@@ -531,7 +600,10 @@ static void DisplayCustomerMenu(Customer customer)
                         );
                     }
                     break;
-                
+                #endregion
+
+                #region 6. Request A Check Book
+
                 case "6":
                     Accounts? checkAccount = SelectAccount(customer);
 
@@ -542,7 +614,6 @@ static void DisplayCustomerMenu(Customer customer)
 
                     var checkRequest = new ServiceRequest
                     {
-                        RequestId = checkAccount.ServiceRequests.Count +1,
                         AccNo = checkAccount.AccNo,
                         Type = ServiceRequestType.CheckBook
                         
@@ -550,14 +621,19 @@ static void DisplayCustomerMenu(Customer customer)
 
                     checkAccount.ServiceRequests.Add(checkRequest);
 
-                    Console.WriteLine("Check book requested. Your " +
-                    $"request ID is {checkRequest.RequestId}");
+                    // commits request status  -> SQL Server
+                    dbContext.SaveChanges();
+
+                    Console.WriteLine($"Check book requested. Your request ID is {checkRequest.RequestId}");
                     break;
-                
+
+                #endregion
+
+                #region 7. Change Password
                 case "7":
                     Console.WriteLine("Please enter your current password:");
 
-                    string? currentPasswordInput = Console.ReadLine();
+                    string? currentPasswordInput = ReadPassword();
 
 
                     if (!customer.ValidateLogin(currentPasswordInput ?? ""))
@@ -568,7 +644,7 @@ static void DisplayCustomerMenu(Customer customer)
 
                     Console.WriteLine("Please enter your new password: ");
 
-                    string? newPasswordInput = Console.ReadLine();
+                    string? newPasswordInput = ReadPassword();
 
                     if (string.IsNullOrWhiteSpace(newPasswordInput))
                     {
@@ -577,17 +653,23 @@ static void DisplayCustomerMenu(Customer customer)
                     }
 
                     Console.WriteLine("Please confirm your new password: ");
-                    string? confirmPasswordInput = Console.ReadLine();
+                    string? confirmPasswordInput = ReadPassword();
 
                     if (newPasswordInput != confirmPasswordInput)
                     {
                         Console.WriteLine("Passwords do not match. Your password was not changed.");
                     }
 
-                    customer.Password = newPasswordInput;
+                    customer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPasswordInput);
+
+                    // commits updated password -> SQL Server
+                    dbContext.SaveChanges();
 
                     Console.WriteLine("Your password was changed successfully.");
                     break;
+
+                #endregion
+
                 case "8":
                     inCustomerMenu = false;
                     break;
@@ -604,7 +686,6 @@ static void DisplayCustomerMenu(Customer customer)
     }
 }
 #endregion
-
 
 
 // Admin menu loop, taking a User list to hold all users and preserve a single record of truth
@@ -701,6 +782,9 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                     // really owns their account
                     targetCustomer.Accounts.Add(newAccount);
 
+                    // commits new account from in-memory obj -> SQL Serber
+                    dbContext.SaveChanges();
+
                     Console.WriteLine(
                         $"Account {newAccount.AccNo}" +
                         $"created for " +
@@ -758,6 +842,9 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
 
                     deleteTargetCustomer.Accounts.Remove(accountToDelete);
 
+                    // commits deleted account to SQL Server
+                    dbContext.SaveChanges();
+
                     Console.WriteLine($"Account  {accountToDelete.AccNo} deleted.");
 
                     break;
@@ -798,10 +885,10 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
 
                         accountToEdit.AccHolderName = profileRequest.NewAccHolderName;
 
-                        Console.WriteLine("Account " +
-                        $"{accountToEdit.AccNo}" + 
-                        $"holder name updated to " +
-                        $"{accountToEdit.AccHolderName}.");
+                        // saves updated name -> SQL Server
+                        dbContext.SaveChanges();
+
+                        Console.WriteLine("Account {accountToEdit.AccNo} holder name updated to {accountToEdit.AccHolderName}.");
                     }
                     catch (Exception ex)
                     {
@@ -856,7 +943,7 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
 
                     Console.WriteLine("Enter a new password for " +
                     $"{resetTargetCustomer.Username}:");
-                    string? resetPasswordInput = Console.ReadLine();
+                    string? resetPasswordInput = ReadPassword();
 
                     if (string.IsNullOrWhiteSpace(resetPasswordInput))
                     {
@@ -864,7 +951,10 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                         break;
                     }
 
-                    resetTargetCustomer.Password = resetPasswordInput;
+                    resetTargetCustomer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(resetPasswordInput);
+
+                    // commits new password -> SQL Server
+                    dbContext.SaveChanges();
 
                     Console.WriteLine("Customer password has been reset" +
                     $"for {resetTargetCustomer.Username}");
@@ -911,18 +1001,18 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                     for (int i = 0; i < pendingRequests.Count; i++)
                     {
                         var r = pendingRequests[i];
-                        Console.WriteLine("{i + 1}. Request " +
-                        $"{r.RequestId} - " +
-                        $"{r.Type} " +
-                        $"({r.DateRequested})");
+                        Console.WriteLine($"{i + 1}. Request{r.RequestId} - {r.Type} On: ({r.DateRequested})");
                     }
 
-                    Console.WriteLine("Select a request to approve:");
+                    Console.WriteLine("To select a request to approve, enter the request number:");
                     string? requestInput = Console.ReadLine();
 
                     if(int.TryParse(requestInput, out int requestIndex) && requestIndex >= 1 && requestIndex <= pendingRequests.Count)
                     {
                         pendingRequests[requestIndex - 1].Status = ServiceRequestStatus.Approved;
+
+                        // commits approval -> SQL Server
+                        dbContext.SaveChanges();
 
                         Console.WriteLine("Request Approved.");
                     }

@@ -5,7 +5,7 @@ namespace bankLIB.Data;
 
 // this is the core EF Core class that represents a session/connection
 // to the DB, and ea. DbSet<T> property represents one TABLE mapped directly
-// from a C# class, a Code-First strategy
+// from a C# class, using a Code-First strategy
 
 public class BankDbContext : DbContext
 {
@@ -24,8 +24,7 @@ public class BankDbContext : DbContext
     // Constructor that supplies the connection details vs BankDbContext hardcoding them itself
     // ex of 'Constructor Injection' 
 
-    public BankDbContext(
-        DbContextOptions<BankDbContext> options) : base(options)
+    public BankDbContext(DbContextOptions<BankDbContext> options) : base(options)
     {
         
     }
@@ -35,8 +34,6 @@ public class BankDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
-    
     
     // Table-Per_Hierarchy. Customer + Admin both : User, this tells EF how to store both in the User table
     // allowing a hidden discriminator column to tell EF which rows are cust. and which are admin as SQL does not do this natively

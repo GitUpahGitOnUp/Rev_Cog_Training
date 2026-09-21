@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace bankLIB.Entities;
 
 // this is one recorded event on an acc: dep, withdr, etc
@@ -5,8 +7,9 @@ namespace bankLIB.Entities;
 public class Transaction
 {
     #region Properties
-    public int TransactionId { get; set; }
 
+    public int TransactionId {get; set;}
+    
     // accNo of acc the trans. happened ON
     // and is stored separately as a value type and not an Account reference
     // so that the transaction history stays stable even if the acc. obj. changes in the futur

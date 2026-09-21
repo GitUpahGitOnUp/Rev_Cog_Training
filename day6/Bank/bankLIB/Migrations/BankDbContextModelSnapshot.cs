@@ -37,6 +37,12 @@ namespace bankLIB.Migrations
                     b.Property<int?>("CustomerUserId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("InterestRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("LoanTermYears")
+                        .HasColumnType("int");
+
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
@@ -50,7 +56,10 @@ namespace bankLIB.Migrations
             modelBuilder.Entity("bankLIB.Entities.ServiceRequest", b =>
                 {
                     b.Property<int>("RequestId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestId"));
 
                     b.Property<int>("AccNo")
                         .HasColumnType("int");
@@ -110,9 +119,20 @@ namespace bankLIB.Migrations
             modelBuilder.Entity("bankLIB.Entities.User", b =>
                 {
                     b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Password")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MiddleInitial")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
