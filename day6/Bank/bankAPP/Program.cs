@@ -6,7 +6,8 @@ using bankLIB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-// reads appsettings.json from app output folder
+// ConfigBuilder is the .NET class for loading the application settings, setbase path points to where to look
+// AddJsonFile reads appsettings.json from app output folder
 IConfiguration config = new ConfigurationBuilder().SetBasePath(AppContext.BaseDirectory).AddJsonFile("appsettings.json").Build();
 
 string connectionString = config.GetConnectionString("BankDb") ?? 
@@ -23,61 +24,6 @@ using BankDbContext dbContext = new BankDbContext(optionsBuilder.Options);
 SeedDatabaseIfEmpty(dbContext);
 
 AuthService authService = new AuthService(dbContext);
-
-// top level safety net to try to make this app air-tight
-// to catch an unanticipated error and not crash the whole dang thing
-#region ------- Welcome Menu - Run Application -------
-
-try
-{
-    RunApplication(authService, dbContext);
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"There was an unexpected error: {ex.Message}");
-    Console.WriteLine("The application will now exit.");
-}
-
-
-static void RunApplication(AuthService authService, BankDbContext dbContext)
-{
-    
-    bool continueMenuSelection = true;
-
-    while(continueMenuSelection)
-    {
-        Console.WriteLine("");
-        Console.WriteLine("-------- Welcome to Community Wealth Credit Union  --------");
-        Console.WriteLine("");
-        Console.WriteLine("Please select from the options below to login: ");
-        Console.WriteLine("");
-        Console.WriteLine("1. Customer");
-        Console.WriteLine("2. Admin ");
-        Console.WriteLine("3. Exit");
-
-        string? choice = Console.ReadLine();  // ? == nullable reference type, forces compiler to check before using it
-
-        switch (choice)
-        {
-            case "1":
-                    HandleCustomerLogin(authService, dbContext);
-                    break;
-            
-            case "2":
-                    HandleAdminLogin(authService, dbContext);
-                    break;
-            
-            case "3":
-                    continueMenuSelection = false;
-                    break;
-            default:
-                    Console.WriteLine("Invalid choice. Please try again.");
-                    break;
-
-        }
-    }
-}
-#endregion
 
 #region ------- Seed Database If Empty ------- 
 
@@ -158,22 +104,6 @@ static void SeedDatabaseIfEmpty(BankDbContext dbContext)
 #endregion
 
 
-// prompts cust. for login, continue to menu if credentials are validated
-#region ------- Handle Customer Login -------
-static void HandleCustomerLogin(AuthService authService, BankDbContext dbContext)
-{
-    Customer? customer = PromptLogin<Customer>(authService);
-
-    if (customer is not null)
-    {
-        Console.WriteLine($"Welcome back, {customer.FirstName}! Please make a selection:");
-        Console.WriteLine("");
-        DisplayCustomerMenu(customer, dbContext);
-    }
-}
-#endregion
-
-
 // prompts admin for login, continue to menu if validated
 #region ------- Handle Admin Login -------
 static void HandleAdminLogin(AuthService authService, BankDbContext dbContext)
@@ -188,6 +118,82 @@ static void HandleAdminLogin(AuthService authService, BankDbContext dbContext)
     }
 }
 #endregion
+
+
+// prompts cust. for login, continue to menu if credentials are validated
+#region ------- Handle Customer Login -------
+
+static void HandleCustomerLogin(AuthService authService, BankDbContext dbContext)
+{
+    Customer? customer = PromptLogin<Customer>(authService);
+
+    if (customer is not null)
+    {
+        Console.WriteLine($"Welcome back, {customer.FirstName}! Please make a selection:");
+        Console.WriteLine("");
+        DisplayCustomerMenu(customer, dbContext);
+    }
+}
+#endregion
+
+
+// generic handles login prompt for Cust + Admin types
+// and loops until login is validated or user gives up and exits
+#region ------- PromptLogin Method -------
+
+static TUser? PromptLogin<TUser>(AuthService authService)
+    // where... is a compile-time check that tells the compiler that TUser must be a User or an inheritance member of User class
+    // and this gives if(loggedInUser is TUser typedUser) lower in the block it's ability to validate
+    where TUser : User 
+{
+    while (true)
+    {
+        Console.Write("Please enter username:   ");
+        string? username = Console.ReadLine();
+        Console.WriteLine("");
+
+        Console.Write("Please enter your password:  ");
+        string? password = ReadPassword();
+        Console.WriteLine("");
+
+        var request = new LoginRequest
+        {
+            Username = username ?? "",
+            Password = password 
+        };
+
+        try
+        {
+            User loggedInUser = authService.Login(request);
+
+            // checks that logged-in user is of the expected type i.e. 
+            // if a customer type is trying to access the customer menu
+            // if it's not the right user type, it denies access to menus
+            if (loggedInUser is TUser typedUser)
+            {
+                return typedUser;
+            }
+
+            Console.WriteLine("Invalid credentials for this login.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Login failed: {ex.Message}");
+        }
+
+        Console.Write("Please enter to retry, or 'exit' to cancel: ");
+        string? retry = Console.ReadLine();
+
+        if (string.Equals(
+            retry, "exit",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+    }
+}
+#endregion
+
 
 #region ------- Read Password Securely ------- 
 
@@ -230,61 +236,6 @@ static string ReadPassword()
 }
 
 #endregion
-// generic handles login prompt for Cust + Admin types
-// and loops until login is validated or user gives up and exits
-#region ------- PromptLogin Method -------
-
-static TUser? PromptLogin<TUser>(AuthService authService)
-    // where... is a compile=time check that tells the compiler that TUser must be a User or an inheritance member of User class
-    // and this gives if(loggedInUser is TUser typedUser) lower in the block it's ability to validate
-    where TUser : User 
-{
-    while (true)
-    {
-        Console.Write("Please enter username:   ");
-        string? username = Console.ReadLine();
-        Console.WriteLine("");
-
-        Console.Write("Please enter your password:  ");
-        string? password = ReadPassword();
-        Console.WriteLine("");
-
-        var request = new LoginRequest
-        {
-            Username = username ?? "",
-            Password = password 
-        };
-
-        try
-        {
-            User loggedInUser = authService.Login(request);
-
-            // checks that logged-in user is of the expected type
-            // denies access to the respective menus
-            if (loggedInUser is TUser typedUser)
-            {
-                return typedUser;
-            }
-
-            Console.WriteLine("Invalid credentials for this login.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Login failed: {ex.Message}");
-        }
-
-        Console.Write("Please enter to retry, or 'exit' to cancel: ");
-        string? retry = ReadPassword();
-
-        if (string.Equals(
-            retry, "exit",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-    }
-}
-#endregion
 
 
 #region ------- Select Account Method -------
@@ -320,7 +271,7 @@ static Accounts? SelectAccount(Customer customer)
 #endregion
 
 
-#region ------- Select Customer Method -------
+#region ------- Select Customer Method For Admin Tasks -------
 
 static Customer? SelectCustomer(BankDbContext dbContext)
 {   
@@ -356,6 +307,63 @@ static Customer? SelectCustomer(BankDbContext dbContext)
     return matchedCustomer;
 }
 #endregion
+
+
+// top level safety net to try to make this app air-tight
+// to catch an unanticipated error and not crash the whole dang thing
+#region ------- Welcome Menu - Run Application -------
+
+try
+{
+    RunApplication(authService, dbContext);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"There was an unexpected error: {ex.Message}");
+    Console.WriteLine("The application will now exit.");
+}
+
+
+static void RunApplication(AuthService authService, BankDbContext dbContext)
+{
+    
+    bool continueMenuSelection = true;
+
+    while(continueMenuSelection)
+    {
+        Console.WriteLine("");
+        Console.WriteLine("-------- Welcome to Community Wealth Credit Union  --------");
+        Console.WriteLine("");
+        Console.WriteLine("Please select from the options below to login: ");
+        Console.WriteLine("");
+        Console.WriteLine("1. Customer");
+        Console.WriteLine("2. Admin ");
+        Console.WriteLine("3. Exit");
+
+        string? choice = Console.ReadLine();  // ? == nullable reference type, forces compiler to check before using it
+
+        switch (choice)
+        {
+            case "1":
+                    HandleCustomerLogin(authService, dbContext);
+                    break;
+            
+            case "2":
+                    HandleAdminLogin(authService, dbContext);
+                    break;
+            
+            case "3":
+                    continueMenuSelection = false;
+                    break;
+            default:
+                    Console.WriteLine("Invalid choice. Please try again.");
+                    break;
+
+        }
+    }
+}
+#endregion
+
 
 //  Customer Menu loop
 //  uses try/catch for each option so a bad entry doesn't crash the entire menu
@@ -401,7 +409,9 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                     Console.WriteLine($"Account Number: {selectedAccount.AccNo}");
                     Console.WriteLine($"Account Type: {selectedAccount.Type}");
                     Console.WriteLine($"Account Holder: {selectedAccount.AccHolderName}");
-                    Console.WriteLine($"Balance: {selectedAccount.AccBalance:C}");
+                    Console.WriteLine($"Balance: " +
+                    $"{(selectedAccount.AccBalance < 0 ? "-" : "")}" +
+                    $"${Math.Abs(selectedAccount.AccBalance):N2}");
 
                     break;
                 #endregion
@@ -995,7 +1005,8 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                         {
                             Console.WriteLine($" {acc.Type}" +
                             $"(#{acc.AccNo}): " +
-                            $"{acc.AccBalance:C}");
+                            $"{(acc.AccBalance < 0 ? "-" : "")}" +
+                            $"${Math.Abs(acc.AccBalance):N2}");
                         }
                     }
                     break;
