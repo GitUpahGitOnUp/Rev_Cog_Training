@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 public abstract class User
 {
 
+#region     User Properties
     public int UserId {get; set;}
     public string FirstName {get; set;} = "";
 
@@ -16,6 +17,8 @@ public abstract class User
     public string Username {get; set;} = "";
 
     public string PasswordHash { get; set; } = "";
+
+#endregion
 
     // each sub-class gets access to this validation logic
 

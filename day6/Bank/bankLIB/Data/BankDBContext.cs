@@ -29,17 +29,34 @@ public class BankDbContext : DbContext
         
     }
 
-    // OnModelCreating called by EF Core automatically when setting up the DB schema
+    // OnModelCreating called once by EF Core at app startup to build its internal schema snapshot
     // this allows for customization for things ef core doesn't handle on its own
-
+    // this is where Fluent API config lives
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
     
     // Table-Per_Hierarchy. Customer + Admin both : User, this tells EF how to store both in the User table
     // allowing a hidden discriminator column to tell EF which rows are cust. and which are admin as SQL does not do this natively
     modelBuilder.Entity<User>().HasDiscriminator<string>("UserType").HasValue<Customer>("Customer").HasValue<Admin>("Admin");
+
+    // tells EF Core that Transaction.AccNo IS the real foreign key to Accounts.AccNo,
+    // which prevents EF Core create its own hidden AccountsAccNo shadow column
+    modelBuilder.Entity<Transaction>()
+        .HasOne<Accounts>() // Transaction has no 'public Accounts Account get/set navigations property pointing back thus no navigation property
+                                // so <Accounts> explicitly lists the target type  instead
+
+        .WithMany(a => a.Transactions) 
+
+        .HasForeignKey(t => t.AccNo); // explicityly insturcts EF Core to use Transaction's own AccNo property as the FK column instead of generating its own
+
+    modelBuilder.Entity<ServiceRequest>()
+        .HasOne<Accounts>()
+        .WithMany(a => a.ServiceRequests)
+        .HasForeignKey(sr => sr.AccNo);
+
     
     base.OnModelCreating(modelBuilder);
+
     }
 
 

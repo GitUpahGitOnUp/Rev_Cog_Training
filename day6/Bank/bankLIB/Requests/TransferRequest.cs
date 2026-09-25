@@ -19,7 +19,7 @@ public class TransferRequest
         if (FromAccNo <= 0)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(FromAccNo), "The source account number is invalid."); // using nameof will prevent me from changing the property name and 
+                nameof(FromAccNo), "The source account number is invalid."); // using nameof will prevent me from changing the property name in the future and 
         }                                                                    // not reflecting it here. The compiler would give me guff about it.   
 
         if (ToAccNo <= 0)

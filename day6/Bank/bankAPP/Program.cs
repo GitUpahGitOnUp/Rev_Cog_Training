@@ -5,13 +5,8 @@ using bankLIB.Requests;
 using bankLIB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 // reads appsettings.json from app output folder
-// IConfigurationBuilder is a part of MS.Extenstion.Config and 
-// the standard .NET way to laod settings files
-
 IConfiguration config = new ConfigurationBuilder().SetBasePath(AppContext.BaseDirectory).AddJsonFile("appsettings.json").Build();
 
 string connectionString = config.GetConnectionString("BankDb") ?? 
@@ -51,7 +46,11 @@ static void RunApplication(AuthService authService, BankDbContext dbContext)
 
     while(continueMenuSelection)
     {
-        Console.WriteLine("-------- Bank Menu   --------");
+        Console.WriteLine("");
+        Console.WriteLine("-------- Welcome to Community Wealth Credit Union  --------");
+        Console.WriteLine("");
+        Console.WriteLine("Please select from the options below to login: ");
+        Console.WriteLine("");
         Console.WriteLine("1. Customer");
         Console.WriteLine("2. Admin ");
         Console.WriteLine("3. Exit");
@@ -72,7 +71,7 @@ static void RunApplication(AuthService authService, BankDbContext dbContext)
                     continueMenuSelection = false;
                     break;
             default:
-                    Console.WriteLine("invalid choice. Please try again.");
+                    Console.WriteLine("Invalid choice. Please try again.");
                     break;
 
         }
@@ -95,26 +94,28 @@ static void SeedDatabaseIfEmpty(BankDbContext dbContext)
     }
 
     var checkingAccount = new Accounts
-    {
-        AccNo = 1001,
-        AccHolderName = "Jane Doe",
-        AccBalance = 500,
-        Type = AccountType.Checking
+    (
+        1001,
+        "Jane Doe",
+        AccountType.Checking,
+        500
     
-    };
+    );
         var savingsAccount = new Accounts
-    {
-        AccNo = 1002,
-        AccHolderName = "Jane Doe",
-        AccBalance = 2500,
-        Type = AccountType.Savings
-    };
+    (
+        1002,
+        "Jane Doe",
+        AccountType.Savings,
+        2500
+    );
         var loanAccount = new Accounts
+    (
+       1003,
+      "Jane Doe",
+      AccountType.Loan,  
+     -10000
+    )
     {
-      AccNo = 1003,
-      AccHolderName = "Jane Doe",
-      AccBalance = -10000,
-      Type = AccountType.Loan  ,
       InterestRate = 6.5m,
       LoanTermYears = 15
     };
@@ -125,7 +126,7 @@ static void SeedDatabaseIfEmpty(BankDbContext dbContext)
         MiddleInitial = "M",
         LastName = "Doe",
         Username = "customer1",
-        PasswordHash = BCrypt.Net.BCrypt.HashPassword("customer123"),
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Customer123!"),
         Accounts = new List<Accounts>
         {
             checkingAccount,
@@ -140,7 +141,7 @@ static void SeedDatabaseIfEmpty(BankDbContext dbContext)
         MiddleInitial = "S",
         LastName = "Rivera",
         Username = "admin1",
-        PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123")
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!")
     };
 
     // .Add() doesn't hit the DB, it tells dbContext to track the new object for future saving
@@ -157,7 +158,7 @@ static void SeedDatabaseIfEmpty(BankDbContext dbContext)
 #endregion
 
 
-// promps cust. for login, continue to menu if credentials are validated
+// prompts cust. for login, continue to menu if credentials are validated
 #region ------- Handle Customer Login -------
 static void HandleCustomerLogin(AuthService authService, BankDbContext dbContext)
 {
@@ -165,7 +166,8 @@ static void HandleCustomerLogin(AuthService authService, BankDbContext dbContext
 
     if (customer is not null)
     {
-        Console.WriteLine($"Welcome to Community Wealth Credit Union, {customer.FirstName}!");
+        Console.WriteLine($"Welcome back, {customer.FirstName}! Please make a selection:");
+        Console.WriteLine("");
         DisplayCustomerMenu(customer, dbContext);
     }
 }
@@ -180,13 +182,14 @@ static void HandleAdminLogin(AuthService authService, BankDbContext dbContext)
 
     if (admin is not null)
     {
-        Console.WriteLine($"Welcome back, {admin.Username}!");
+        Console.WriteLine($"Welcome back, {admin.FirstName}!");
+        Console.WriteLine("");
         DisplayAdminMenu(admin, dbContext);
     }
 }
 #endregion
 
-#region Read Password Securely 
+#region ------- Read Password Securely ------- 
 
 static string ReadPassword()
 {
@@ -214,7 +217,8 @@ static string ReadPassword()
             Console.Write("\b\b");
             continue;
         }
-
+        // filters out control chars like Enter, Tab, Esc, etc.
+        // and only acts on printable chars
         if (!char.IsControl(key.KeyChar))
         {
             password += key.KeyChar;
@@ -226,9 +230,10 @@ static string ReadPassword()
 }
 
 #endregion
-// generic handles login propmpt for Cust + Admin types
+// generic handles login prompt for Cust + Admin types
 // and loops until login is validated or user gives up and exits
 #region ------- PromptLogin Method -------
+
 static TUser? PromptLogin<TUser>(AuthService authService)
     // where... is a compile=time check that tells the compiler that TUser must be a User or an inheritance member of User class
     // and this gives if(loggedInUser is TUser typedUser) lower in the block it's ability to validate
@@ -236,11 +241,13 @@ static TUser? PromptLogin<TUser>(AuthService authService)
 {
     while (true)
     {
-        Console.WriteLine("Please enter username: ");
+        Console.Write("Please enter username:   ");
         string? username = Console.ReadLine();
+        Console.WriteLine("");
 
-        Console.WriteLine("Please enter your password: ");
+        Console.Write("Please enter your password:  ");
         string? password = ReadPassword();
+        Console.WriteLine("");
 
         var request = new LoginRequest
         {
@@ -266,7 +273,7 @@ static TUser? PromptLogin<TUser>(AuthService authService)
             Console.WriteLine($"Login failed: {ex.Message}");
         }
 
-        Console.WriteLine("Please enter to retry, or 'exit' to cancel: ");
+        Console.Write("Please enter to retry, or 'exit' to cancel: ");
         string? retry = ReadPassword();
 
         if (string.Equals(
@@ -285,12 +292,13 @@ static Accounts? SelectAccount(Customer customer)
 {
     if(customer.Accounts.Count == 0)
     {
-        Console.WriteLine("No accounts found of this profile.");
+        Console.WriteLine("No accounts found for this profile.");
         return null;
     }
 
-    Console.WriteLine("Select an account.");
+    Console.WriteLine("Please select an account:");
 
+    // prints a numbered menu list of accounts for user to select from
     for (int i = 0; i < customer.Accounts.Count; i++)
     {
         Accounts acc = customer.Accounts[i];
@@ -317,7 +325,8 @@ static Accounts? SelectAccount(Customer customer)
 static Customer? SelectCustomer(BankDbContext dbContext)
 {   
 
-    Console.WriteLine("Please enter a customer ID");
+    Console.Write("Please enter a customer ID:  ");
+    Console.WriteLine("");
 
     string? input = Console.ReadLine();
 
@@ -341,7 +350,7 @@ static Customer? SelectCustomer(BankDbContext dbContext)
 
     if (matchedCustomer is null)
     {
-        Console.WriteLine("No customer fount with that ID.");
+        Console.WriteLine("No customer found with that ID.");
     }
 
     return matchedCustomer;
@@ -349,8 +358,9 @@ static Customer? SelectCustomer(BankDbContext dbContext)
 #endregion
 
 //  Customer Menu loop
-//  uses try/catch for each option so one bad entry doesn't crash the entire menu
+//  uses try/catch for each option so a bad entry doesn't crash the entire menu
 #region ------- Customer Menu -------
+
 static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
 {
     bool inCustomerMenu = true;
@@ -358,6 +368,7 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
     while (inCustomerMenu)
     {
         Console.WriteLine("--------- Customer Menu ---------");
+        Console.WriteLine("");
         Console.WriteLine("1. Check Account Details");
         Console.WriteLine("2. Withdraw");
         Console.WriteLine("3. Deposit");
@@ -373,7 +384,9 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
         {
             switch (choice)
             {
+               
                 #region 1. Account Summary Details
+
                 case "1":
 
                     // shows the cust. a numbered list of their accs. and returns there selection, or null is none exists
@@ -404,13 +417,15 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                         break;
                     }
                     
-                    Console.WriteLine("Please enter the amount you would like to withdraw:");
+                    Console.Write("Please enter the amount you would like to withdraw:  ");
                     string? withdrawInput = Console.ReadLine();
+                    Console.WriteLine("");
 
                     // ! == if this does NOT parse, so Invalid statement branch can run
                     if (!decimal.TryParse(withdrawInput, out decimal withdrawAmount))
                     {
                         Console.WriteLine("Invalid amount entered");
+                        Console.WriteLine("");
                         break;
                     }
                     try
@@ -427,6 +442,8 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
 
                         withdrawAccount.Transactions.Add(withdrawTransaction);
                         Console.WriteLine($"Withdrawal Successful. New balance: {newBalance:C}");
+                        Console.WriteLine("");
+                        Console.WriteLine("");
 
                         // commit the withdrawal *and* the transaction record -> SQL Server
                         // this is what moves it from only changing the in-memory obj.
@@ -442,6 +459,7 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                 #endregion
 
                 #region 3. Make A Deposit
+
                 case "3":
                     Accounts? depositAccount = SelectAccount(customer);
 
@@ -450,12 +468,14 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                         break;
                     }
 
-                    Console.WriteLine("Please enter the amount you would like to deposit: ");
+                    Console.Write("Please enter the amount you would like to deposit:   ");
                     string? depositInput = Console.ReadLine();
+                    Console.WriteLine("");
 
                     if (!decimal.TryParse(depositInput, out decimal depositAmount))
                     {
                         Console.WriteLine("Invalid amount entered.");
+                        Console.WriteLine("");
                         break;
                     }
                     try
@@ -476,10 +496,12 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                         dbContext.SaveChanges();
 
                         Console.WriteLine($"Deposit Successful. New balance: {newBalance:C}");
+                        Console.WriteLine("");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Deposit failed: {ex.Message}");
+                        Console.Write($"Deposit failed: {ex.Message}");
+                        Console.WriteLine("");
                     }
                     break;
                 
@@ -488,15 +510,16 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                 #region 4. Make A Transfer
 
                 case"4":
-                    Console.WriteLine("Select the account to transfer FROM: ");
+                    Console.Write("Select the account to transfer FROM: ");
                     Accounts? fromAccount = SelectAccount(customer);
+
 
                     if (fromAccount is null)
                     {
                         break;
                     }
 
-                    Console.WriteLine("Select the account to transfer TO: ");
+                    Console.Write("Select the account to transfer TO: ");
                     Accounts? toAccount = SelectAccount(customer);
 
                     if (toAccount is null)
@@ -504,7 +527,8 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                         break;
                     }
 
-                    Console.WriteLine("Please enter the amount you wish to transfer: ");
+                    Console.Write("Please enter the amount you wish to transfer:    ");
+                    Console.WriteLine("");
 
                     string? transferInput = Console.ReadLine();
 
@@ -557,7 +581,9 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
 
                         Console.WriteLine("Transfer successful.");
 
-                        Console.WriteLine($"{fromAccount.AccNo} New balance:  {toNewBalance:C}");
+                        Console.WriteLine($"Transfered From Account:  {fromAccount.AccNo} New balance:  {fromNewBalance:C}");
+                        Console.WriteLine("");
+                        Console.WriteLine($"Transfered To Account:  {toAccount.AccNo}  New Balance:   {toNewBalance:C}");
                     }
                     catch (Exception ex)
                     {
@@ -587,7 +613,8 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                     // LINQ methods retrieves the most recent transactions based on timestamp
                     var recentTransactions = historyAccount.Transactions.OrderByDescending
                     (
-                        t => t.Timestamp    
+                        t => t.Timestamp  
+
                     ).Take(5);
 
                     foreach (var t in recentTransactions)
@@ -625,13 +652,16 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                     dbContext.SaveChanges();
 
                     Console.WriteLine($"Check book requested. Your request ID is {checkRequest.RequestId}");
+                    Console.WriteLine("");
                     break;
 
                 #endregion
 
                 #region 7. Change Password
+
                 case "7":
-                    Console.WriteLine("Please enter your current password:");
+                    Console.Write("Please enter your current password:  ");
+                    Console.WriteLine("");
 
                     string? currentPasswordInput = ReadPassword();
 
@@ -639,10 +669,14 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                     if (!customer.ValidateLogin(currentPasswordInput ?? ""))
                     {
                         Console.WriteLine("Current password is incorrect");
+                        Console.WriteLine("");
                         break;
                     }
 
-                    Console.WriteLine("Please enter your new password: ");
+                    Console.WriteLine("Your new password must have *at least one* : uppercase letter, lowercase letter, number and special character.");
+                    Console.WriteLine("");
+                    Console.Write("Please enter your new password:  ");
+                    Console.WriteLine("");
 
                     string? newPasswordInput = ReadPassword();
 
@@ -652,12 +686,28 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                         break;
                     }
 
-                    Console.WriteLine("Please confirm your new password: ");
+                    Console.Write("Please confirm your new password: ");
+                    Console.WriteLine("");
                     string? confirmPasswordInput = ReadPassword();
 
                     if (newPasswordInput != confirmPasswordInput)
                     {
                         Console.WriteLine("Passwords do not match. Your password was not changed.");
+                        Console.WriteLine("");
+                        break;
+                    }
+                    // change password request obj. to check for valid password format
+                    var changePasswordRequest = new ChangePasswordRequest {NewPassword = newPasswordInput};
+                    
+                    try
+                    {
+                        changePasswordRequest.Validate();
+                    }
+                    
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"That password did not satisfy creation rules: {ex.Message}");
+                        break;
                     }
 
                     customer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPasswordInput);
@@ -666,6 +716,7 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                     dbContext.SaveChanges();
 
                     Console.WriteLine("Your password was changed successfully.");
+                    Console.WriteLine("");
                     break;
 
                 #endregion
@@ -674,7 +725,7 @@ static void DisplayCustomerMenu(Customer customer, BankDbContext dbContext)
                     inCustomerMenu = false;
                     break;
                 default:
-                    Console.WriteLine("Invalid choice. Please try agian.");
+                    Console.WriteLine("Invalid choice. Please try again.");
                     break;
             }
         }
@@ -698,12 +749,13 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
     while (inAdminMenu)
     {
         Console.WriteLine("--------- Admin Menu ---------");
+        Console.WriteLine("");
         Console.WriteLine("1. Create New Account");
         Console.WriteLine("2. Delete Account");
         Console.WriteLine("3. Edit Account Details");
         Console.WriteLine("4. Display Summary");
         Console.WriteLine("5. Reset Customer Password");
-        Console.WriteLine("6. Approve Check Book Request");
+        Console.WriteLine("6. Approve / Deny Check Book Request");
         Console.WriteLine("7. Exit");
 
         string? choice = Console.ReadLine();
@@ -715,6 +767,7 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                 #region 1. Create A New Account
 
                 case "1":
+
                     Customer? targetCustomer = SelectCustomer(dbContext);
 
                     if (targetCustomer is null)
@@ -722,22 +775,33 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                         break;
                     }
                     
-                    Console.WriteLine("Enter a new account number:");
+                    Console.Write("Enter a new account number:  ");
                     string? newAccNoInput = Console.ReadLine();
+                    Console.WriteLine("");
                     
-                    // if account no. is not found breaks instead of throwing exception
+                    // TryParse checks that the input is a valid integer format and prints an error instead of exiting the menu
                     if (!int.TryParse(newAccNoInput, out int newAccNo))
                     {
                         Console.WriteLine("Invalid account number");
+                        Console.WriteLine("");
                         break;
                     }
 
-                    Console.WriteLine("Please enter the account holder name:");
+                    // Checks to ensure Acc. No. does not already exist
+                    if (dbContext.Accounts.Any(a => a.AccNo == newAccNo))
+                    {
+                        Console.WriteLine("An account with that number already exists. Please select a different one.");
+                        Console.WriteLine("");
+                        break;
+                    }
+
+                    Console.Write("Please enter the account holder name:    ");
                     string? newHolderName = Console.ReadLine();
+                    Console.WriteLine("");
 
                     if (string.IsNullOrWhiteSpace(newHolderName))
                     {
-                        Console.WriteLine("The holder name cannot be empty.");
+                        Console.WriteLine("The account holder name cannot be empty.");
                         break;
                     }
                     
@@ -745,9 +809,12 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                     Console.WriteLine("1. Checking");
                     Console.WriteLine("2. Savings");
                     Console.WriteLine("3. Loan");
+
                     string? typeInput = Console.ReadLine();
+                    Console.WriteLine("");
 
                     AccountType newAccType;
+                    bool validType = true;  // bool will help break out of Assign Type switch for invalid Acc. Type input
 
                     switch (typeInput)
                     {
@@ -764,34 +831,37 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                             break;
                         default:
                             Console.WriteLine("Invalid type.");
-                            return;
+                            newAccType = default; // assigned here to appease the compiler, it's never actually read due to validType guard
+                            validType = false;
+                            break;
+                    }
+
+                    // break out of Acc. Type invalid entry back -> Admin menu
+                    if (!validType)
+                    {
+                        break; // breaks the OUTER switch's case 1 -> the admin menu loop
                     }
 
                     // obj. initializer for new account calls account constructor to create the obj. in memory
                     // sets several acc. properties right away, defaults acc. balance -> 0
                     // 'var' relies on type inference with the compiler using what's at the right side of '=' to call the correct Account constructor
-                    var newAccount = new Accounts
-                    {
-                        AccNo = newAccNo,
-                        AccHolderName = newHolderName,
-                        AccBalance = 0,
-                        Type = newAccType
-                    };
+                    var newAccount = new Accounts(newAccNo, newHolderName, newAccType);
+                    
 
                     // this attaches the customer account to the new Accounts object in their own list, so the customer
                     // really owns their account
                     targetCustomer.Accounts.Add(newAccount);
 
-                    // commits new account from in-memory obj -> SQL Serber
+                    // commits new account from in-memory obj -> SQL Server
                     dbContext.SaveChanges();
 
                     Console.WriteLine(
-                        $"Account {newAccount.AccNo}" +
+                        $"Account {newAccount.AccNo} " +
                         $"created for " +
                         $"{targetCustomer.Username}.");
 
                     break;  
-                #endregion
+        #endregion
 
                 #region 2. Delete Account
 
@@ -811,7 +881,7 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                     }
                     // Gaurdrails for Checkings and Savings Accounts with a non-zero balance, excluding loan accounts
                     // Can't delete accounts with a positive or negaitive balance
-                    if (accountToDelete.Type != 0)
+                    if (accountToDelete.AccBalance != 0)
                     {
                         if (accountToDelete.Type != AccountType.Loan && accountToDelete.AccBalance < 0)
                         {
@@ -821,7 +891,7 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                         }
                         else
                         {
-                            Console.WriteLine("Connot delete and account with a non-zero balance. " +
+                            Console.WriteLine("Cannot delete an account with a non-zero balance. " +
                             $"Current Balance: " +
                             $"{accountToDelete.AccBalance:C}");
                         }
@@ -830,7 +900,7 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
 
                     Console.WriteLine(
                         $"Are you sure you want to delete account {accountToDelete.AccNo}?" +
-                        "yes/no");
+                        " Please enter yes/no");
 
                         string? confirmDelete = Console.ReadLine();
 
@@ -888,7 +958,7 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                         // saves updated name -> SQL Server
                         dbContext.SaveChanges();
 
-                        Console.WriteLine("Account {accountToEdit.AccNo} holder name updated to {accountToEdit.AccHolderName}.");
+                        Console.WriteLine($"Account {accountToEdit.AccNo} holder name updated to {accountToEdit.AccHolderName}.");
                     }
                     catch (Exception ex)
                     {
@@ -917,7 +987,7 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
 
                         if (c.Accounts.Count == 0)
                         {
-                            Console.WriteLine("No exsisting accounts to summarize.");
+                            Console.WriteLine("No existing accounts to summarize.");
                             continue;
                         }
 
@@ -950,13 +1020,36 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                         Console.WriteLine("The new password cannot be empty.");
                         break;
                     }
+    
+                    Console.Write("Please confirm your new password: ");
+                    Console.WriteLine("");
+                    string? confirmPasswordInput = ReadPassword();
+
+                    if (resetPasswordInput != confirmPasswordInput)
+                    {
+                        Console.WriteLine("Passwords do not match. Your password was not changed.");
+                        Console.WriteLine("");
+                        break;
+                    }
+
+                    var resetPasswordRequest = new ChangePasswordRequest {NewPassword = resetPasswordInput};
+
+                    try
+                    {
+                        resetPasswordRequest.Validate();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"That password did not satisfy creation rules: {ex.Message}");
+                        break;
+                    }
 
                     resetTargetCustomer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(resetPasswordInput);
 
                     // commits new password -> SQL Server
                     dbContext.SaveChanges();
 
-                    Console.WriteLine("Customer password has been reset" +
+                    Console.WriteLine("Customer password has been reset " +
                     $"for {resetTargetCustomer.Username}");
                     break;
                 
@@ -979,10 +1072,19 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                         break;
                     }
 
-                    if (approveAccount.Type != AccountType.Loan && approveAccount.AccBalance < 0)
+                    var approveServiceRequest = new ServiceRequestDecision
                     {
-                        Console.WriteLine("Cannot approve: account is overdrawn." +
-                        $"Balance:  {approveAccount.AccBalance:C}");
+                        AccType = approveAccount.Type,
+                        AccBalance = approveAccount.AccBalance
+                    };
+
+                    try
+                    {
+                        approveServiceRequest.Validate();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Cannot approve or deny:  {ex.Message}");
                         break;
                     }
 
@@ -1004,21 +1106,49 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                         Console.WriteLine($"{i + 1}. Request{r.RequestId} - {r.Type} On: ({r.DateRequested})");
                     }
 
-                    Console.WriteLine("To select a request to approve, enter the request number:");
+                    Console.WriteLine("To select a request, enter the request number:");
                     string? requestInput = Console.ReadLine();
 
-                    if(int.TryParse(requestInput, out int requestIndex) && requestIndex >= 1 && requestIndex <= pendingRequests.Count)
-                    {
-                        pendingRequests[requestIndex - 1].Status = ServiceRequestStatus.Approved;
-
-                        // commits approval -> SQL Server
-                        dbContext.SaveChanges();
-
-                        Console.WriteLine("Request Approved.");
-                    }
-                    else
+                    // bail out early with the existing "Invalid selection" message if the
+                    // request number itself doesn't parse or is out of range - same guard as before
+                    if (!(int.TryParse(requestInput, out int requestIndex) && requestIndex >= 1 && requestIndex <= pendingRequests.Count))
                     {
                         Console.WriteLine("Invalid selection.");
+                        break;
+                    }
+
+                    // NEW: ask whether this specific request should be approved or denied,
+                    // instead of always approving. Reuses the existing ServiceRequestStatus.Rejected
+                    // value that was already defined on the enum but never actually used anywhere.
+                    Console.WriteLine("1. Approve");
+                    Console.WriteLine("2. Deny");
+                    Console.Write("Select an action:  ");
+                    string? actionInput = Console.ReadLine();
+                    Console.WriteLine("");
+
+                    switch (actionInput)
+                    {
+                        case "1":
+                            pendingRequests[requestIndex - 1].Status = ServiceRequestStatus.Approved;
+
+                            // commits approval -> SQL Server
+                            dbContext.SaveChanges();
+
+                            Console.WriteLine("Request Approved.");
+                            break;
+
+                        case "2":
+                            pendingRequests[requestIndex - 1].Status = ServiceRequestStatus.Rejected;
+
+                            // commits denial -> SQL Server
+                            dbContext.SaveChanges();
+
+                            Console.WriteLine("Request Denied.");
+                            break;
+
+                        default:
+                            Console.WriteLine("Invalid choice. No action was taken on this request.");
+                            break;
                     }
                     break;
                 #endregion
@@ -1027,7 +1157,7 @@ static void DisplayAdminMenu(Admin admin, BankDbContext dbContext)
                     inAdminMenu = false;
                     break;
                 default:
-                    Console.WriteLine("Invalid choice. Please try agian.");
+                    Console.WriteLine("Invalid choice. Please try again.");
                     break;
             }
             

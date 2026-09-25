@@ -9,7 +9,7 @@ public class UserProfileRequest
     
     public void Validate()
     {
-        if (AccNo >= 0)
+        if (AccNo <= 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(AccNo), "This account number is invalid");

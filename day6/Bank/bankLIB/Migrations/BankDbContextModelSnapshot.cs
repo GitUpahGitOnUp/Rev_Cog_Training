@@ -64,9 +64,6 @@ namespace bankLIB.Migrations
                     b.Property<int>("AccNo")
                         .HasColumnType("int");
 
-                    b.Property<int?>("AccountsAccNo")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("DateRequested")
                         .HasColumnType("datetime2");
 
@@ -78,7 +75,7 @@ namespace bankLIB.Migrations
 
                     b.HasKey("RequestId");
 
-                    b.HasIndex("AccountsAccNo");
+                    b.HasIndex("AccNo");
 
                     b.ToTable("ServiceRequests");
                 });
@@ -92,9 +89,6 @@ namespace bankLIB.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TransactionId"));
 
                     b.Property<int>("AccNo")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("AccountsAccNo")
                         .HasColumnType("int");
 
                     b.Property<decimal>("Amount")
@@ -111,7 +105,7 @@ namespace bankLIB.Migrations
 
                     b.HasKey("TransactionId");
 
-                    b.HasIndex("AccountsAccNo");
+                    b.HasIndex("AccNo");
 
                     b.ToTable("Transactions");
                 });
@@ -183,14 +177,18 @@ namespace bankLIB.Migrations
                 {
                     b.HasOne("bankLIB.Entities.Accounts", null)
                         .WithMany("ServiceRequests")
-                        .HasForeignKey("AccountsAccNo");
+                        .HasForeignKey("AccNo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("bankLIB.Entities.Transaction", b =>
                 {
                     b.HasOne("bankLIB.Entities.Accounts", null)
                         .WithMany("Transactions")
-                        .HasForeignKey("AccountsAccNo");
+                        .HasForeignKey("AccNo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("bankLIB.Entities.Accounts", b =>

@@ -22,5 +22,6 @@ public class BankDbContextFactory : IDesignTimeDbContextFactory<BankDbContext>
     "TrustServerCertificate=True;");
 
     return new BankDbContext(optionsBuilder.Options);
+    
     }
 }
